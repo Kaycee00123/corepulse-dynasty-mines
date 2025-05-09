@@ -12,12 +12,13 @@ body {
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
+  background-color: white;
 }
 
 /* Remove unnecessary padding */
 @media (max-width: 768px) {
   .card {
-    padding: 1em;
+    padding: 0.75em;
   }
 }
 
@@ -38,7 +39,7 @@ body {
 
 /* Card styles with reduced padding for mobile */
 .card {
-  padding: 1.5em;
+  padding: 1rem;
 }
 
 /* Make text more readable on small screens */
@@ -70,4 +71,26 @@ body {
     font-size: 1rem;
     line-height: 1.5rem;
   }
+}
+
+/* Circle animation */
+@keyframes pulse-circle {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
+  }
+  
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(249, 115, 22, 0);
+  }
+  
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
+  }
+}
+
+.pulse-animation {
+  animation: pulse-circle 2s infinite;
 }
