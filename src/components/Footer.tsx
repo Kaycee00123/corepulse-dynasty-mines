@@ -1,6 +1,11 @@
 
 import { Link } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faTwitter, 
+  faDiscord 
+} from '@fortawesome/free-brands-svg-icons';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -24,16 +29,24 @@ export function Footer() {
               <Link to="/about" className="text-gray-500 hover:text-core">About</Link>
               <Link to="/terms" className="text-gray-500 hover:text-core">Terms</Link>
               <Link to="/privacy" className="text-gray-500 hover:text-core">Privacy</Link>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-core">Twitter</a>
-              <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-core">Discord</a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-core">
+                <FontAwesomeIcon icon={faTwitter} className="mr-1" />Twitter
+              </a>
+              <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-core">
+                <FontAwesomeIcon icon={faDiscord} className="mr-1" />Discord
+              </a>
             </div>
           ) : (
             <div className="flex space-x-4 md:order-2">
               <Link to="/about" className="text-xs text-gray-500 hover:text-core">About</Link>
               <Link to="/terms" className="text-xs text-gray-500 hover:text-core">Terms</Link>
               <Link to="/privacy" className="text-xs text-gray-500 hover:text-core">Privacy</Link>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-core">Twitter</a>
-              <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-core">Discord</a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-core">
+                <FontAwesomeIcon icon={faTwitter} className="mr-1" />Twitter
+              </a>
+              <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-core">
+                <FontAwesomeIcon icon={faDiscord} className="mr-1" />Discord
+              </a>
             </div>
           )}
         </div>

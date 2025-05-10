@@ -17,6 +17,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faClipboard, 
+  faUser, 
+  faClock,
+  faChartLine
+} from '@fortawesome/free-solid-svg-icons';
 
 const Dashboard = () => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -232,8 +239,8 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="flex flex-col items-center">
                   <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden mb-2">
-                    {user?.avatar ? (
-                      <img src={user.avatar} alt="User avatar" className="w-full h-full object-cover" />
+                    {user?.avatar_url ? (
+                      <img src={user.avatar_url} alt="User avatar" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-core text-white text-xl font-bold">
                         {user?.username?.charAt(0) || 'U'}
@@ -256,11 +263,9 @@ const Dashboard = () => {
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-gray-500">Your Referral ID:</span>
                     <div className="flex items-center">
-                      <code className="bg-gray-100 px-2 py-1 text-xs rounded">{user?.referralCode || 'REF12345'}</code>
+                      <code className="bg-gray-100 px-2 py-1 text-xs rounded">{user?.referral_code || 'REF12345'}</code>
                       <Button variant="ghost" size="sm" className="h-6 w-6 p-0 ml-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
+                        <FontAwesomeIcon icon={faClipboard} className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

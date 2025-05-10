@@ -4,7 +4,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faBars, 
+  faXmark, 
+  faChevronDown
+} from '@fortawesome/free-solid-svg-icons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -119,9 +124,9 @@ export function Navigation() {
               >
                 <span className="sr-only">Open main menu</span>
                 {mobileMenuOpen ? (
-                  <X className="block h-6 w-6" aria-hidden="true" />
+                  <FontAwesomeIcon icon={faXmark} className="block h-6 w-6" aria-hidden="true" />
                 ) : (
-                  <Menu className="block h-6 w-6" aria-hidden="true" />
+                  <FontAwesomeIcon icon={faBars} className="block h-6 w-6" aria-hidden="true" />
                 )}
               </button>
             </div>
