@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { useMining } from './MiningContext';
 import { toast } from '@/hooks/use-toast';
 import { NFT, UserNFT } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NFTContextType {
   availableNFTs: NFT[];
@@ -23,57 +24,112 @@ export const NFTProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [totalBoost, setTotalBoost] = useState<number>(0);
 
-  // Mock NFTs data
+  // Load NFTs data
   useEffect(() => {
-    const mockNFTs: NFT[] = [
-      {
-        id: 'bronze_miner',
-        name: 'Bronze Miner',
-        description: 'A basic mining pass that boosts your mining rate by 10%',
-        tier: 'bronze',
-        boost_percentage: 10,
-        price: 1000,
-        image_url: '/placeholder.svg'
-      },
-      {
-        id: 'silver_excavator',
-        name: 'Silver Excavator',
-        description: 'An intermediate mining pass that boosts your mining rate by 20%',
-        tier: 'silver',
-        boost_percentage: 20,
-        price: 2500,
-        image_url: '/placeholder.svg'
-      },
-      {
-        id: 'gold_dynamite',
-        name: 'Gold Dynamite',
-        description: 'An advanced mining pass that boosts your mining rate by 35%',
-        tier: 'gold',
-        boost_percentage: 35,
-        price: 5000,
-        image_url: '/placeholder.svg'
-      }
-    ];
-    
-    setAvailableNFTs(mockNFTs);
+    fetchAvailableNFTs();
     
     if (user) {
-      // This would be replaced with actual Supabase query for user's NFTs
-      const mockUserNFTs: UserNFT[] = [];
-      setUserNFTs(mockUserNFTs);
-      
+      fetchUserNFTs();
+    } else {
+      setUserNFTs([]);
+      setTotalBoost(0);
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  // Subscribe to user NFTs updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_nfts',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchUserNFTs();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  const fetchAvailableNFTs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('nfts')
+        .select('*')
+        .order('price', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      setAvailableNFTs(data || []);
+    } catch (error) {
+      console.error('Error fetching NFTs:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load available NFTs.",
+        variant: "destructive"
+      });
+    } finally {
+      if (!user) {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const fetchUserNFTs = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_nfts')
+        .select('*, nft:nfts(*)')
+        .eq('user_id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      const formattedUserNFTs: UserNFT[] = data.map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        nft_id: item.nft_id,
+        purchased_at: item.purchased_at,
+        nft: item.nft
+      }));
+
+      setUserNFTs(formattedUserNFTs);
+
       // Calculate total boost from owned NFTs
-      const calculatedBoost = mockUserNFTs.reduce((total, userNft) => {
-        const nft = mockNFTs.find(n => n.id === userNft.nft_id);
-        return total + (nft?.boost_percentage || 0);
+      const calculatedBoost = formattedUserNFTs.reduce((total, userNft) => {
+        return total + (userNft.nft?.boost_percentage || 0);
       }, 0);
       
       setTotalBoost(calculatedBoost);
       updateMiningBoost(calculatedBoost);
+    } catch (error) {
+      console.error('Error fetching user NFTs:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your NFTs.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
-  }, [user]);
+  };
 
   const mintNFT = async (nftId: string): Promise<boolean> => {
     if (!user || !balance) {
@@ -116,22 +172,47 @@ export const NFTProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return false;
     }
     
+    // Start database transaction
     try {
-      // This would be replaced with actual Supabase transaction
-      // Mock the minting process
-      const newUserNFT: UserNFT = {
-        id: `user_nft_${Date.now()}`,
-        user_id: user.id,
-        nft_id: nftId,
-        purchased_at: new Date().toISOString(),
-        nft: nftToMint
-      };
-      
-      // Add to user's NFTs
-      setUserNFTs(prev => [...prev, newUserNFT]);
-      
-      // Update total boost
+      // 1. Insert the user_nft record
+      const { error: nftError } = await supabase
+        .from('user_nfts')
+        .insert({
+          user_id: user.id,
+          nft_id: nftId
+        });
+
+      if (nftError) {
+        throw nftError;
+      }
+
+      // 2. Deduct the cost from user balance
+      const { error: balanceError } = await supabase
+        .from('user_balances')
+        .update({
+          tokens: balance.tokens - nftToMint.price,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
+      if (balanceError) {
+        throw balanceError;
+      }
+
+      // 3. Update user's mining boost in profile
       const newBoost = totalBoost + nftToMint.boost_percentage;
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          mining_boost: newBoost
+        })
+        .eq('id', user.id);
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      // Transaction succeeded, update local state
       setTotalBoost(newBoost);
       updateMiningBoost(newBoost);
       

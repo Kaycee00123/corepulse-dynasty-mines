@@ -9,7 +9,291 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      crew_members: {
+        Row: {
+          crew_id: string
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          crew_id: string
+          id?: string
+          joined_at?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          crew_id?: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_members_crew_id_fkey"
+            columns: ["crew_id"]
+            isOneToOne: false
+            referencedRelation: "crews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crew_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crews: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          description: string
+          id: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          owner_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crews_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mining_sessions: {
+        Row: {
+          active: boolean
+          created_at: string
+          end_time: string | null
+          id: string
+          start_time: string
+          tokens_mined: number
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          start_time?: string
+          tokens_mined?: number
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          start_time?: string
+          tokens_mined?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mining_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfts: {
+        Row: {
+          boost_percentage: number
+          created_at: string
+          description: string
+          id: string
+          image_url: string
+          name: string
+          price: number
+          tier: string
+        }
+        Insert: {
+          boost_percentage: number
+          created_at?: string
+          description: string
+          id?: string
+          image_url: string
+          name: string
+          price: number
+          tier: string
+        }
+        Update: {
+          boost_percentage?: number
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string
+          name?: string
+          price?: number
+          tier?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          last_active: string | null
+          mining_boost: number
+          mining_rate: number
+          referral_code: string
+          streak_days: number
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          last_active?: string | null
+          mining_boost?: number
+          mining_rate?: number
+          referral_code: string
+          streak_days?: number
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          last_active?: string | null
+          mining_boost?: number
+          mining_rate?: number
+          referral_code?: string
+          streak_days?: number
+          username?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          bonus_earned: number
+          created_at: string
+          id: string
+          referred_id: string
+          referrer_id: string
+        }
+        Insert: {
+          bonus_earned?: number
+          created_at?: string
+          id?: string
+          referred_id: string
+          referrer_id: string
+        }
+        Update: {
+          bonus_earned?: number
+          created_at?: string
+          id?: string
+          referred_id?: string
+          referrer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_balances: {
+        Row: {
+          id: string
+          tokens: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          tokens?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          tokens?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_balances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_nfts: {
+        Row: {
+          id: string
+          nft_id: string
+          purchased_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          nft_id: string
+          purchased_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          nft_id?: string
+          purchased_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_nfts_nft_id_fkey"
+            columns: ["nft_id"]
+            isOneToOne: false
+            referencedRelation: "nfts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_nfts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

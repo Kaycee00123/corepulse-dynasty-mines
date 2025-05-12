@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { Referral } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ReferralContextType {
   referrals: Referral[];
@@ -23,33 +24,66 @@ export const ReferralProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     if (user) {
       setReferralCode(user.referral_code);
-      
-      // This would be replaced with actual Supabase query for user's referrals
-      const mockReferrals: Referral[] = [
-        {
-          id: '1',
-          referrer_id: user.id,
-          referred_id: 'user2',
-          created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          bonus_earned: 15.5
-        },
-        {
-          id: '2',
-          referrer_id: user.id,
-          referred_id: 'user3',
-          created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          bonus_earned: 8.2
-        }
-      ];
-      
-      setReferrals(mockReferrals);
+      fetchReferrals();
     } else {
       setReferralCode(null);
       setReferrals([]);
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   }, [user]);
+
+  // Subscribe to referrals updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'referrals',
+          filter: `referrer_id=eq.${user.id}`,
+        },
+        () => {
+          fetchReferrals();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  const fetchReferrals = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      // Get referrals where user is the referrer
+      const { data, error } = await supabase
+        .from('referrals')
+        .select('*, referred:referred_id(username)')
+        .eq('referrer_id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      setReferrals(data || []);
+    } catch (error) {
+      console.error('Error fetching referrals:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your referrals.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const totalReferrals = referrals.length;
   const totalBonusEarned = referrals.reduce((total, ref) => total + ref.bonus_earned, 0);

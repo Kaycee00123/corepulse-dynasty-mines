@@ -3,14 +3,15 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { MiningSession, UserBalance } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MiningContextType {
   isMining: boolean;
   miningRate: number;
   totalMined: number;
   sessionMined: number;
-  startMining: () => void;
-  stopMining: () => void;
+  startMining: () => Promise<void>;
+  stopMining: () => Promise<void>;
   updateMiningRate: (newRate: number) => void;
   balance: UserBalance | null;
   miningBoost: number;
@@ -47,26 +48,18 @@ export const MiningProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     monthly: effectiveRate * 60 * 24 * 30, // per month
   };
 
-  // Load initial user data
+  // Load user data
   useEffect(() => {
     if (user) {
-      // This would be replaced with actual Supabase data fetching
+      // Set mining rate from user profile
       setMiningRate(user.mining_rate || 1.0);
       setMiningBoost(user.mining_boost || 0);
       
-      // Mock initial balance
-      const mockBalance: UserBalance = {
-        id: '1',
-        user_id: user.id,
-        tokens: 100, // Starting with 100 tokens
-        updated_at: new Date().toISOString()
-      };
-      
-      setBalance(mockBalance);
-      setTotalMined(mockBalance.tokens);
+      // Fetch user balance
+      fetchUserBalance();
 
-      // Start mining automatically when user logs in
-      startMining();
+      // Check for active mining session
+      checkActiveMiningSession();
     }
   }, [user]);
 
@@ -77,78 +70,230 @@ export const MiningProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [isAuthenticated]);
 
-  // Mining logic
-  const miningTick = () => {
+  // Subscribe to balance updates
+  useEffect(() => {
     if (!user) return;
+
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_balances',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            setBalance(payload.new as UserBalance);
+            setTotalMined((payload.new as UserBalance).tokens);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  // Subscribe to mining session updates
+  useEffect(() => {
+    if (!user || !currentSession) return;
+
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'mining_sessions',
+          filter: `id=eq.${currentSession.id}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            setCurrentSession(payload.new as MiningSession);
+            setSessionMined((payload.new as MiningSession).tokens_mined);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, currentSession]);
+
+  const fetchUserBalance = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_balances')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') { // No rows returned
+          // Create initial balance for user
+          const { data: newBalance, error: insertError } = await supabase
+            .from('user_balances')
+            .insert({
+              user_id: user.id,
+              tokens: 100 // Starting balance
+            })
+            .select('*')
+            .single();
+
+          if (insertError) {
+            throw insertError;
+          }
+          
+          setBalance(newBalance);
+          setTotalMined(newBalance.tokens);
+        } else {
+          throw error;
+        }
+      } else if (data) {
+        setBalance(data);
+        setTotalMined(data.tokens);
+      }
+    } catch (error) {
+      console.error('Error fetching user balance:', error);
+    }
+  };
+
+  const checkActiveMiningSession = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('mining_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('active', true)
+        .order('start_time', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        // Resume active session
+        setCurrentSession(data);
+        setSessionMined(data.tokens_mined);
+        setIsMining(true);
+        setLastMiningUpdate(Date.now());
+
+        // Start the mining interval
+        const interval = setInterval(miningTick, 10000);
+        setMiningInterval(interval);
+        
+        toast({
+          title: "Mining Resumed",
+          description: "Your previous mining session has been resumed.",
+        });
+      }
+    } catch (error) {
+      console.error('Error checking active mining sessions:', error);
+    }
+  };
+
+  // Mining logic
+  const miningTick = async () => {
+    if (!user || !currentSession) return;
     
     const now = Date.now();
     const elapsedMinutes = (now - lastMiningUpdate) / (1000 * 60);
     const minedAmount = elapsedMinutes * effectiveRate;
     
     setSessionMined(prev => prev + minedAmount);
-    setTotalMined(prev => prev + minedAmount);
     setLastMiningUpdate(now);
-    
-    // Update the balance (mock - would be real Supabase update)
-    if (balance) {
-      const updatedBalance = {
-        ...balance,
-        tokens: balance.tokens + minedAmount,
-        updated_at: new Date().toISOString()
-      };
-      setBalance(updatedBalance);
-    }
 
-    // Persist the session (mock - would be real Supabase update)
-    if (currentSession) {
-      const updatedSession = {
-        ...currentSession,
-        tokens_mined: sessionMined + minedAmount
-      };
-      setCurrentSession(updatedSession);
-    }
+    try {
+      // Update mining session in database
+      await supabase
+        .from('mining_sessions')
+        .update({
+          tokens_mined: sessionMined + minedAmount
+        })
+        .eq('id', currentSession.id);
+        
+      // Update user balance
+      if (balance) {
+        await supabase
+          .from('user_balances')
+          .update({
+            tokens: balance.tokens + minedAmount,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id);
+      }
 
-    // Milestone notifications
-    if (Math.floor(sessionMined) < Math.floor(sessionMined + minedAmount)) {
+      // Milestone notifications
+      if (Math.floor(sessionMined) < Math.floor(sessionMined + minedAmount)) {
+        toast({
+          title: "Mining Milestone!",
+          description: `You've mined ${Math.floor(sessionMined + minedAmount)} tokens in this session!`,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating mining data:', error);
+    }
+  };
+
+  const startMining = async () => {
+    if (isMining || !user) return;
+
+    try {
+      // Create a new mining session in the database
+      const { data, error } = await supabase
+        .from('mining_sessions')
+        .insert({
+          user_id: user.id,
+          active: true,
+          tokens_mined: 0
+        })
+        .select('*')
+        .single();
+
+      if (error) {
+        throw error;
+      }
+      
+      setCurrentSession(data);
+      setSessionMined(0);
+      setLastMiningUpdate(Date.now());
+      setIsMining(true);
+      
+      // Start the mining interval (update every 10 seconds)
+      const interval = setInterval(miningTick, 10000);
+      setMiningInterval(interval);
+      
       toast({
-        title: "Mining Milestone!",
-        description: `You've mined ${Math.floor(sessionMined + minedAmount)} tokens in this session!`,
+        title: "Mining Started",
+        description: "You're now mining $CORE tokens!",
+      });
+    } catch (error) {
+      console.error('Error starting mining session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start mining. Please try again.",
+        variant: "destructive"
       });
     }
   };
 
-  const startMining = () => {
-    if (isMining || !user) return;
-
-    // Create a new mining session
-    const newSession: MiningSession = {
-      id: `session_${Date.now()}`,
-      user_id: user.id,
-      start_time: new Date().toISOString(),
-      active: true,
-      tokens_mined: 0
-    };
-    
-    setCurrentSession(newSession);
-    setSessionMined(0);
-    setLastMiningUpdate(Date.now());
-    setIsMining(true);
-    
-    // Start the mining interval (update every 10 seconds)
-    const interval = setInterval(miningTick, 10000);
-    setMiningInterval(interval);
-    
-    toast({
-      title: "Mining Started",
-      description: "You're now mining $CORE tokens!",
-    });
-  };
-
-  const stopMining = () => {
-    if (!isMining) return;
+  const stopMining = async () => {
+    if (!isMining || !currentSession) return;
     
     // Run one final mining tick
-    miningTick();
+    await miningTick();
     
     // Clear the mining interval
     if (miningInterval) {
@@ -156,23 +301,30 @@ export const MiningProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setMiningInterval(null);
     }
     
-    // Update the session (mock - would be real Supabase update)
-    if (currentSession) {
-      const updatedSession = {
-        ...currentSession,
-        end_time: new Date().toISOString(),
-        active: false,
-        tokens_mined: sessionMined
-      };
-      setCurrentSession(updatedSession);
+    try {
+      // Update the session in database
+      await supabase
+        .from('mining_sessions')
+        .update({
+          end_time: new Date().toISOString(),
+          active: false
+        })
+        .eq('id', currentSession.id);
+      
+      setIsMining(false);
+      
+      toast({
+        title: "Mining Stopped",
+        description: `You mined ${sessionMined.toFixed(2)} tokens this session!`,
+      });
+    } catch (error) {
+      console.error('Error stopping mining session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to stop mining. Please try again.",
+        variant: "destructive"
+      });
     }
-    
-    setIsMining(false);
-    
-    toast({
-      title: "Mining Stopped",
-      description: `You mined ${sessionMined.toFixed(2)} tokens this session!`,
-    });
   };
 
   const updateMiningRate = (newRate: number) => {

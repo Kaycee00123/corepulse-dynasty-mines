@@ -7,11 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
+import { AlertCircle } from 'lucide-react';
 
 const SignIn = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn } = useAuth();
+  const { signIn, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -28,9 +29,9 @@ const SignIn = () => {
     try {
       await signIn(email, password);
       navigate(from, { replace: true });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Sign in error:', err);
-      setError('Invalid email or password. Please try again.');
+      setError(err.message || 'Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +69,7 @@ const SignIn = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="mt-1 input-core"
                   placeholder="Email address"
+                  disabled={isLoading || authLoading}
                 />
               </div>
               <div>
@@ -84,6 +86,7 @@ const SignIn = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="mt-1 input-core"
                   placeholder="Password"
+                  disabled={isLoading || authLoading}
                 />
               </div>
             </div>
@@ -97,8 +100,9 @@ const SignIn = () => {
             </div>
 
             {error && (
-              <div className="text-sm text-red-600">
-                {error}
+              <div className="bg-red-50 text-red-700 p-3 rounded-md flex items-start">
+                <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+                <span className="text-sm">{error}</span>
               </div>
             )}
 
@@ -106,7 +110,7 @@ const SignIn = () => {
               <Button
                 type="submit"
                 className="w-full btn-primary py-2"
-                disabled={isLoading}
+                disabled={isLoading || authLoading}
               >
                 {isLoading ? 'Signing in...' : 'Sign in'}
               </Button>

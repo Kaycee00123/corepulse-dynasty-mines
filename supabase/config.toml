@@ -1,1 +1,5 @@
+
 project_id = "sfvpxjubrolngidsiczv"
+
+[functions.mining-rewards]
+verify_jwt = true

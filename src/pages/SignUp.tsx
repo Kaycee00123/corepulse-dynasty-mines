@@ -1,16 +1,18 @@
 
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
+import { AlertCircle } from 'lucide-react';
 
 const SignUp = () => {
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { signUp, isAuthenticated, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -18,6 +20,21 @@ const SignUp = () => {
   const [referralCode, setReferralCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Get referral code from URL if present
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      setReferralCode(refCode);
+    }
+  }, [searchParams]);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,11 +56,11 @@ const SignUp = () => {
     }
 
     try {
-      await signUp(email, username, password, referralCode);
+      await signUp(email, username, password, referralCode || undefined);
       navigate('/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Sign up error:', err);
-      setError('Unable to create account. Please try again.');
+      setError(err.message || 'Unable to create account. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -81,6 +98,7 @@ const SignUp = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="mt-1 input-core"
                   placeholder="Email address"
+                  disabled={isLoading || authLoading}
                 />
               </div>
               <div>
@@ -97,6 +115,7 @@ const SignUp = () => {
                   onChange={(e) => setUsername(e.target.value)}
                   className="mt-1 input-core"
                   placeholder="Username"
+                  disabled={isLoading || authLoading}
                 />
               </div>
               <div>
@@ -112,7 +131,8 @@ const SignUp = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="mt-1 input-core"
-                  placeholder="Password"
+                  placeholder="Password (min 8 characters)"
+                  disabled={isLoading || authLoading}
                 />
               </div>
               <div>
@@ -129,6 +149,7 @@ const SignUp = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="mt-1 input-core"
                   placeholder="Confirm Password"
+                  disabled={isLoading || authLoading}
                 />
               </div>
               <div>
@@ -143,13 +164,15 @@ const SignUp = () => {
                   onChange={(e) => setReferralCode(e.target.value)}
                   className="mt-1 input-core"
                   placeholder="Enter referral code"
+                  disabled={isLoading || authLoading}
                 />
               </div>
             </div>
 
             {error && (
-              <div className="text-sm text-red-600">
-                {error}
+              <div className="bg-red-50 text-red-700 p-3 rounded-md flex items-start">
+                <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+                <span className="text-sm">{error}</span>
               </div>
             )}
 
@@ -157,7 +180,7 @@ const SignUp = () => {
               <Button
                 type="submit"
                 className="w-full btn-primary py-2"
-                disabled={isLoading}
+                disabled={isLoading || authLoading}
               >
                 {isLoading ? 'Creating account...' : 'Create account'}
               </Button>
