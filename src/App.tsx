@@ -18,6 +18,8 @@ import Dashboard from "./pages/Dashboard";
 import NFTs from "./pages/NFTs";
 import Referrals from "./pages/Referrals";
 import Leaderboard from "./pages/Leaderboard";
+import Crews from "./pages/Crews";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +43,8 @@ const App = () => (
                   <Route path="/nfts" element={<NFTs />} />
                   <Route path="/referrals" element={<Referrals />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
+                  <Route path="/crews" element={<Crews />} />
+                  <Route path="/admin" element={<Admin />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

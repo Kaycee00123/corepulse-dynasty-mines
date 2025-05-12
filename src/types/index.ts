@@ -10,6 +10,7 @@ export interface User {
   last_active?: string;
   streak_days: number;
   referral_code: string;
+  tokens?: number; // Added for admin view
 }
 
 export interface MiningSession {
@@ -62,7 +63,11 @@ export interface Crew {
   created_at: string;
   owner_id: string;
   member_count: number;
-  total_mining_power: number;
+  total_mining_power?: number;
+  owner?: {
+    username: string;
+    avatar_url?: string;
+  };
 }
 
 export interface CrewMember {
@@ -73,7 +78,7 @@ export interface CrewMember {
   role: 'owner' | 'admin' | 'member';
   user?: {
     username: string;
-    avatar_url: string;
+    avatar_url?: string;
     mining_rate: number;
   };
 }
