@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -102,7 +103,7 @@ export const CommunityActivity = () => {
       // Format the data into unified activity events
       const formattedMiningEvents = miningSessions.map((session: any) => ({
         id: session.id,
-        event_type: 'mining',
+        event_type: 'mining' as const,
         username: session.profiles?.username || 'Unknown User',
         avatar_url: session.profiles?.avatar_url,
         details: `mined ${session.tokens_mined.toFixed(2)} $WAVES`,
@@ -111,7 +112,7 @@ export const CommunityActivity = () => {
       
       const formattedNFTEvents = nftPurchases.map((purchase: any) => ({
         id: purchase.id,
-        event_type: 'nft',
+        event_type: 'nft' as const,
         username: purchase.profiles?.username || 'Unknown User',
         avatar_url: purchase.profiles?.avatar_url,
         details: `minted ${purchase.nfts?.tier || ''} NFT "${purchase.nfts?.name || 'Unknown NFT'}"`,
@@ -120,7 +121,7 @@ export const CommunityActivity = () => {
       
       const formattedCrewEvents = crewJoins.map((join: any) => ({
         id: join.id,
-        event_type: 'crew',
+        event_type: 'crew' as const,
         username: join.profiles?.username || 'Unknown User',
         avatar_url: join.profiles?.avatar_url,
         details: `joined crew "${join.crews?.name || 'Unknown Crew'}"`,
