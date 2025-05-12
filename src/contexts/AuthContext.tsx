@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from '@/hooks/use-toast';
@@ -131,10 +130,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
@@ -147,8 +146,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Welcome back!",
         description: "You've successfully signed in.",
       });
-
-      return data;
     } catch (error: any) {
       console.error('Error signing in:', error);
       toast({
@@ -162,11 +159,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, username: string, password: string, referralCode?: string) => {
+  const signUp = async (email: string, username: string, password: string, referralCode?: string): Promise<void> => {
     setIsLoading(true);
     try {
       // First register with Supabase Auth
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -180,38 +177,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
 
-      // If referral code was provided, process it
-      if (referralCode && data.user) {
-        try {
-          // Find referrer id from the referral code
-          const { data: referrerData, error: referrerError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('referral_code', referralCode)
-            .single();
-
-          if (referrerData && !referrerError) {
-            // Create referral record
-            await supabase
-              .from('referrals')
-              .insert({
-                referrer_id: referrerData.id,
-                referred_id: data.user.id,
-                bonus_earned: 15 // Default bonus amount
-              });
-          }
-        } catch (referralError) {
-          console.error('Error processing referral:', referralError);
-          // Don't fail signup if referral processing fails
-        }
-      }
+      // If referral code was provided, process it later after we have the user
+      // We'll handle this in the database trigger for new users
 
       toast({
         title: "Account created!",
         description: "Welcome to CorePulse. Start mining now!",
       });
-
-      return data;
     } catch (error: any) {
       console.error('Error signing up:', error);
       toast({

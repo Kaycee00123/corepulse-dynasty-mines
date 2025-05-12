@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useMining } from './MiningContext';
@@ -73,7 +72,13 @@ export const NFTProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         throw error;
       }
 
-      setAvailableNFTs(data || []);
+      // Cast the tier field to ensure it matches our type
+      const typedNFTs: NFT[] = data?.map(nft => ({
+        ...nft,
+        tier: nft.tier as "bronze" | "silver" | "gold" // Cast string to our union type
+      })) || [];
+
+      setAvailableNFTs(typedNFTs);
     } catch (error) {
       console.error('Error fetching NFTs:', error);
       toast({
@@ -102,12 +107,16 @@ export const NFTProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         throw error;
       }
 
+      // Properly cast the data to match our types
       const formattedUserNFTs: UserNFT[] = data.map(item => ({
         id: item.id,
         user_id: item.user_id,
         nft_id: item.nft_id,
         purchased_at: item.purchased_at,
-        nft: item.nft
+        nft: item.nft ? {
+          ...item.nft,
+          tier: item.nft.tier as "bronze" | "silver" | "gold" // Cast to match our type
+        } : undefined
       }));
 
       setUserNFTs(formattedUserNFTs);
