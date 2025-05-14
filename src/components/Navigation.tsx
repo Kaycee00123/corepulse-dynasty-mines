@@ -1,228 +1,199 @@
-
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faBars, 
-  faXmark, 
-  faChevronDown
-} from '@fortawesome/free-solid-svg-icons';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
-export function Navigation() {
-  const { user, isAuthenticated, signOut } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
+export const Navigation = () => {
+  const { isAuthenticated, user, signOut } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
 
-  // Navigation items with paths and visibility conditions
-  const navItems = [
-    { name: 'Dashboard', path: '/dashboard', auth: true },
-    { name: 'NFTs', path: '/nfts', auth: true },
-    { name: 'Referrals', path: '/referrals', auth: true },
-    { name: 'Leaderboard', path: '/leaderboard', auth: true },
-    { name: 'Crews', path: '/crews', auth: true },
-  ];
-
-  // Filter items based on auth state
-  const filteredNavItems = navItems.filter(
-    item => (item.auth && isAuthenticated) || (!item.auth)
-  );
-
-  const isActive = (path: string) => location.pathname === path;
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="bg-white border-b border-gray-200 shadow-sm">
+      <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-core">CorePulse</span>
+              <div className="h-8 w-8 bg-gradient-to-br from-core to-core-dark rounded-md"></div>
+              <span className="ml-2 font-bold text-lg">CorePulse</span>
             </Link>
-            
-            {/* Desktop navigation */}
-            <div className="hidden md:ml-10 md:flex md:space-x-4">
-              {filteredNavItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive(item.path)
-                      ? 'bg-core text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
+            <nav className="hidden md:ml-6 md:flex md:space-x-8">
+              {isAuthenticated ? (
+                <>
+                  <Link to="/dashboard" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Dashboard
+                  </Link>
+                  <Link to="/nfts" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    NFTs
+                  </Link>
+                  <Link to="/crews" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Crews
+                  </Link>
+                  <Link to="/referrals" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Referrals
+                  </Link>
+                  <Link to="/leaderboard" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Leaderboard
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Home
+                  </Link>
+                </>
+              )}
+            </nav>
           </div>
-          
-          <div className="flex items-center">
+          <div className="hidden md:ml-6 md:flex md:items-center">
             {isAuthenticated ? (
-              <div className="hidden md:flex items-center">
-                <p className="mr-4 text-sm text-gray-700">
-                  <span className="font-medium">
-                    {user?.username || 'User'}
-                  </span>
-                </p>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                      <Avatar>
-                        <AvatarImage src={user?.avatar_url} />
-                        <AvatarFallback className="bg-core text-white">
-                          {user?.username?.substring(0, 2).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link to="/profile">Profile</Link>
-                    </DropdownMenuItem>
-                    {user?.username === 'admin' && (
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin">Admin Panel</Link>
-                      </DropdownMenuItem>
+              <div className="ml-3 relative flex items-center space-x-4">
+                <Link to="/profile" className="flex items-center text-sm px-4 py-2 rounded-md hover:bg-gray-100">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center mr-2">
+                    {user?.avatar_url ? (
+                      <img src={user.avatar_url} alt="User avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-bold">{user?.username?.charAt(0).toUpperCase() || 'U'}</span>
                     )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => signOut()}>
-                      Sign out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </div>
+                  <span>{user?.username || 'User'}</span>
+                </Link>
+                <button onClick={signOut} className="inline-flex items-center px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-core hover:bg-core-dark">
+                  Sign Out
+                </button>
+                {user?.role === 'admin' && (
+                  <Link to="/admin" className="inline-flex items-center px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-gray-700 hover:bg-gray-800">
+                    Admin
+                  </Link>
+                )}
               </div>
             ) : (
-              <div className="hidden md:flex space-x-2">
-                <Link to="/signin">
-                  <Button variant="outline" className="btn-outline">Sign in</Button>
+              <div className="flex-shrink-0 space-x-2">
+                <Link to="/signin" className="inline-flex items-center px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-core bg-white hover:bg-gray-50 border-core">
+                  Sign In
                 </Link>
-                <Link to="/signup">
-                  <Button className="btn-primary">Sign up</Button>
+                <Link to="/signup" className="inline-flex items-center px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-core hover:bg-core-dark">
+                  Sign Up
                 </Link>
               </div>
             )}
-            
-            {/* Mobile menu button */}
-            <div className="flex md:hidden">
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-core hover:bg-gray-100 focus:outline-none"
+          </div>
+          <div className="-mr-2 flex items-center md:hidden">
+            <button
+              onClick={toggleMenu}
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+              aria-expanded="false"
+            >
+              <span className="sr-only">Open main menu</span>
+              <svg
+                className={`${isOpen ? 'hidden' : 'block'} h-6 w-6`}
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
               >
-                <span className="sr-only">Open main menu</span>
-                {mobileMenuOpen ? (
-                  <FontAwesomeIcon icon={faXmark} className="block h-6 w-6" aria-hidden="true" />
-                ) : (
-                  <FontAwesomeIcon icon={faBars} className="block h-6 w-6" aria-hidden="true" />
-                )}
-              </button>
-            </div>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+              <svg
+                className={`${isOpen ? 'block' : 'hidden'} h-6 w-6`}
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
-      
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {filteredNavItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.path}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  isActive(item.path)
-                    ? 'bg-core text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {item.name}
-              </Link>
-            ))}
-          </div>
+      <div className={`${isOpen ? 'block' : 'hidden'} md:hidden`}>
+        <div className="pt-2 pb-3 space-y-1">
           {isAuthenticated ? (
-            <div className="pt-4 pb-3 border-t border-gray-200">
-              <div className="flex items-center px-5">
-                <div className="flex-shrink-0">
-                  <Avatar>
-                    <AvatarImage src={user?.avatar_url} />
-                    <AvatarFallback className="bg-core text-white">
-                      {user?.username?.substring(0, 2).toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className="ml-3">
-                  <div className="text-base font-medium text-gray-800">
-                    {user?.username || 'User'}
-                  </div>
-                  <div className="text-sm font-medium text-gray-500">
-                    {user?.email || ''}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 px-2 space-y-1">
-                <Link
-                  to="/profile"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Profile
-                </Link>
-                {user?.username === 'admin' && (
-                  <Link
-                    to="/admin"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Admin Panel
-                  </Link>
-                )}
-                <button
-                  onClick={() => {
-                    signOut();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100"
-                >
-                  Sign out
-                </button>
-              </div>
-            </div>
+            <>
+              <Link to="/dashboard" className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">
+                Dashboard
+              </Link>
+              <Link to="/nfts" className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">
+                NFTs
+              </Link>
+              <Link to="/crews" className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">
+                Crews
+              </Link>
+              <Link to="/referrals" className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">
+                Referrals
+              </Link>
+              <Link to="/leaderboard" className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">
+                Leaderboard
+              </Link>
+            </>
           ) : (
-            <div className="pt-4 pb-3 border-t border-gray-200">
-              <div className="px-2 space-y-2">
-                <Link
-                  to="/signin"
-                  className="block w-full px-3 py-2 rounded-md text-base font-medium text-center text-gray-700 border border-gray-300 hover:bg-gray-100"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Sign in
-                </Link>
-                <Link
-                  to="/signup"
-                  className="block w-full px-3 py-2 rounded-md text-base font-medium text-center text-white bg-core hover:bg-core-dark"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Sign up
-                </Link>
-              </div>
-            </div>
+            <Link to="/" className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">
+              Home
+            </Link>
           )}
         </div>
-      )}
-    </nav>
+        {isAuthenticated ? (
+          <div className="pt-4 pb-3 border-t border-gray-200">
+            <div className="flex items-center px-4">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                  {user?.avatar_url ? (
+                    <img src={user.avatar_url} alt="User avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-lg font-bold">{user?.username?.charAt(0).toUpperCase() || 'U'}</span>
+                  )}
+                </div>
+              </div>
+              <div className="ml-3">
+                <div className="text-base font-medium text-gray-800">{user?.username || 'User'}</div>
+                <div className="text-sm font-medium text-gray-500">{user?.email || ''}</div>
+              </div>
+            </div>
+            <div className="mt-3 space-y-1">
+              <Link to="/profile" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">
+                Your Profile
+              </Link>
+              <button
+                onClick={signOut}
+                className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+              >
+                Sign out
+              </button>
+              {user?.role === 'admin' && (
+                <Link to="/admin" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">
+                  Admin Panel
+                </Link>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="pt-4 pb-3 border-t border-gray-200">
+            <div className="flex flex-col space-y-2 px-4">
+              <Link to="/signin" className="w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-core bg-white hover:bg-gray-50 border-core">
+                Sign In
+              </Link>
+              <Link to="/signup" className="w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-core hover:bg-core-dark">
+                Sign Up
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
   );
-}
+};

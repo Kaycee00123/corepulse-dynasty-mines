@@ -10,91 +10,119 @@
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
-
+ 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 24 95% 53%;
+ 
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
-
+ 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-
+ 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
+ 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
-
+ 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 24 95% 53%;
-
+    --ring: 222.2 84% 4.9%;
+ 
     --radius: 0.5rem;
   }
-
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+ 
+@layer base {
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
   }
 }
 
-@layer components {
-  .core-gradient {
-    @apply bg-gradient-to-r from-core to-core-light;
-  }
-  
-  .core-card {
-    @apply bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300;
-  }
+:root {
+  --core: #F97316;
+  --core-dark: #EA580C;
+}
 
-  .heading-xl {
-    @apply text-3xl font-bold text-gray-900 md:text-4xl;
-  }
+.bg-core {
+  background-color: var(--core);
+}
 
-  .heading-lg {
-    @apply text-2xl font-bold text-gray-900;
-  }
+.bg-core-dark {
+  background-color: var(--core-dark);
+}
 
-  .heading-md {
-    @apply text-xl font-semibold text-gray-900;
-  }
+.text-core {
+  color: var(--core);
+}
 
-  .heading-sm {
-    @apply text-lg font-semibold text-gray-900;
-  }
+.border-core {
+  border-color: var(--core);
+}
 
-  .text-body {
-    @apply text-gray-600;
-  }
+.hover\:bg-core-dark:hover {
+  background-color: var(--core-dark);
+}
 
-  .btn-primary {
-    @apply bg-core hover:bg-core-dark text-white font-medium rounded-lg px-4 py-2 transition-colors duration-200;
+/* Animation for mining particles */
+@keyframes float {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.7;
   }
+  100% {
+    transform: translateY(-100px) scale(0);
+    opacity: 0;
+  }
+}
 
-  .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-800 font-medium border border-gray-200 rounded-lg px-4 py-2 transition-colors duration-200;
+/* Animation for pulsing opacity */
+@keyframes pulse-opacity {
+  0%, 100% {
+    opacity: 1;
   }
+  50% {
+    opacity: 0.6;
+  }
+}
 
-  .btn-outline {
-    @apply bg-transparent hover:bg-gray-50 text-core border border-core rounded-lg px-4 py-2 transition-colors duration-200;
-  }
-
-  .btn-ghost {
-    @apply bg-transparent hover:bg-gray-100 text-gray-600 rounded-lg px-4 py-2 transition-colors duration-200;
-  }
-
-  .card-stats {
-    @apply flex flex-col p-4 bg-white rounded-lg border border-gray-100 shadow-sm;
-  }
-
-  .input-core {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-core focus:border-core;
-  }
+.animate-pulse-opacity {
+  animation: pulse-opacity 2s ease-in-out infinite;
 }

@@ -16,6 +16,7 @@ import { NFTBoostCard } from '@/components/NFTBoostCard';
 import { EarningsSummary } from '@/components/EarningsSummary';
 import { CommunityActivity } from '@/components/CommunityActivity';
 import { useReferrals } from '@/contexts/ReferralContext';
+import { MiningVisualizer } from '@/components/MiningVisualizer';
 import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
@@ -89,30 +90,21 @@ const Dashboard = () => {
           <h1 className="text-xl font-bold mb-4">Mining Dashboard</h1>
           
           <div className="grid md:grid-cols-3 gap-4 mb-4">
-            {/* Mining Control */}
+            {/* Enhanced Mining Control */}
             <div className="md:col-span-2">
               <Card className="h-full">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">Mining Control</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-col items-center justify-center py-2">
-                    {isMining ? (
-                      <div className="bg-orange-100 rounded-full w-24 h-24 flex items-center justify-center mb-4 animate-pulse-opacity">
-                        <div className="bg-core rounded-full w-16 h-16 flex items-center justify-center text-white font-bold">
-                          Active
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mb-4">
-                        <div className="bg-gray-300 rounded-full w-16 h-16 flex items-center justify-center text-white font-bold">
-                          Idle
-                        </div>
-                      </div>
-                    )}
+                  <div className="mb-4">
+                    <MiningVisualizer />
+                  </div>
+                  <div className="flex justify-center">
                     <Button 
                       onClick={isMining ? stopMining : startMining}
                       className={`mt-4 ${isMining ? "bg-red-500 hover:bg-red-600" : "bg-core hover:bg-core-dark"}`}
+                      size="lg"
                     >
                       {isMining ? 'Stop Mining' : 'Start Mining'}
                     </Button>
@@ -130,7 +122,7 @@ const Dashboard = () => {
           {/* Daily Streak */}
           <DailyStreak />
           
-          {/* Earnings Summary */}
+          {/* Enhanced Earnings Summary */}
           <EarningsSummary />
           
           <div className="grid md:grid-cols-12 gap-4">

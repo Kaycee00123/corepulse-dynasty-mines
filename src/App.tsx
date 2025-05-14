@@ -1,61 +1,41 @@
+import { Routes, Route } from 'react-router-dom';
+import { Index } from '@/pages/Index';
+import { SignIn } from '@/pages/SignIn';
+import { SignUp } from '@/pages/SignUp';
+import { ForgotPassword } from '@/pages/ForgotPassword';
+import { Dashboard } from '@/pages/Dashboard';
+import { NFTs } from '@/pages/NFTs';
+import { Crews } from '@/pages/Crews';
+import { Referrals } from '@/pages/Referrals';
+import { Leaderboard } from '@/pages/Leaderboard';
+import { NotFound } from '@/pages/NotFound';
+import { Admin } from '@/pages/Admin';
+import { useAuth } from '@/contexts/AuthContext';
+import Profile from './pages/Profile';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { MiningProvider } from "@/contexts/MiningContext";
-import { NFTProvider } from "@/contexts/NFTContext";
-import { ReferralProvider } from "@/contexts/ReferralContext";
+function App() {
+  const { isAuthenticated, isLoading } = useAuth();
 
-// Pages
-import Index from "./pages/Index";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import ForgotPassword from "./pages/ForgotPassword";
-import Dashboard from "./pages/Dashboard";
-import NFTs from "./pages/NFTs";
-import Referrals from "./pages/Referrals";
-import Leaderboard from "./pages/Leaderboard";
-import Crews from "./pages/Crews";
-import Admin from "./pages/Admin";
-import NotFound from "./pages/NotFound";
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-const queryClient = new QueryClient();
-
-// Wrap the entire application with necessary providers
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    {/* TooltipProvider needs React context, so it should wrap everything */}
-    <TooltipProvider>
-      <AuthProvider>
-        <MiningProvider>
-          <NFTProvider>
-            <ReferralProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/signin" element={<SignIn />} />
-                  <Route path="/signup" element={<SignUp />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/nfts" element={<NFTs />} />
-                  <Route path="/referrals" element={<Referrals />} />
-                  <Route path="/leaderboard" element={<Leaderboard />} />
-                  <Route path="/crews" element={<Crews />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </ReferralProvider>
-          </NFTProvider>
-        </MiningProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/signin" element={<SignIn />} />
+      <Route path="/signup" element={<SignUp />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/nfts" element={<NFTs />} />
+      <Route path="/crews" element={<Crews />} />
+      <Route path="/referrals" element={<Referrals />} />
+      <Route path="/leaderboard" element={<Leaderboard />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/admin" element={<Admin />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
 
 export default App;
