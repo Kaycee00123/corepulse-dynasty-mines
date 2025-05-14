@@ -13,29 +13,33 @@ import NotFound from '@/pages/NotFound';
 import Admin from '@/pages/Admin';
 import { useAuth } from '@/contexts/AuthContext';
 import Profile from './pages/Profile';
+import { Toaster } from "@/components/ui/toaster";
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="h-screen flex items-center justify-center">Loading...</div>;
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/signin" element={<SignIn />} />
-      <Route path="/signup" element={<SignUp />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/nfts" element={<NFTs />} />
-      <Route path="/crews" element={<Crews />} />
-      <Route path="/referrals" element={<Referrals />} />
-      <Route path="/leaderboard" element={<Leaderboard />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/admin" element={<Admin />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/nfts" element={<NFTs />} />
+        <Route path="/crews" element={<Crews />} />
+        <Route path="/referrals" element={<Referrals />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <Toaster />
+    </>
   );
 }
 

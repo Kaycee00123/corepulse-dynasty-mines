@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { LeaderboardEntry } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface LeaderboardTableProps { 
   period: 'daily' | 'weekly' | 'all-time';
@@ -16,6 +18,8 @@ export const LeaderboardTable = ({ period, periodLabel }: LeaderboardTableProps)
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [userRank, setUserRank] = useState<LeaderboardEntry | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAllUsers, setShowAllUsers] = useState(false);
+  const [displayLimit, setDisplayLimit] = useState(10);
 
   useEffect(() => {
     fetchLeaderboardData();
@@ -108,17 +112,26 @@ export const LeaderboardTable = ({ period, periodLabel }: LeaderboardTableProps)
           rank: index + 1
         }));
       
-      // Take top 10 for leaderboard
-      const topTen = leaderboardEntries.slice(0, 10);
-      setEntries(topTen);
+      // Set all entries for potential display later
+      setEntries(leaderboardEntries);
       
       // Find current user's rank
       if (user) {
         const currentUserRank = leaderboardEntries.find(entry => entry.user_id === user.id);
         setUserRank(currentUserRank || null);
       }
+      
+      toast({
+        title: `${periodLabel} Leaderboard Updated`,
+        description: `${leaderboardEntries.length} miners in the rankings`,
+      });
     } catch (error) {
       console.error('Error fetching leaderboard data:', error);
+      toast({
+        title: "Error updating leaderboard",
+        description: "Failed to fetch the latest rankings",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -136,6 +149,15 @@ export const LeaderboardTable = ({ period, periodLabel }: LeaderboardTableProps)
       default: return null;
     }
   };
+  
+  const handleShowMore = () => {
+    if (showAllUsers) {
+      setDisplayLimit(10); // Reset to default
+    } else {
+      setDisplayLimit(entries.length); // Show all entries
+    }
+    setShowAllUsers(!showAllUsers);
+  };
 
   if (isLoading) {
     return (
@@ -149,6 +171,9 @@ export const LeaderboardTable = ({ period, periodLabel }: LeaderboardTableProps)
       </div>
     );
   }
+
+  // Get entries for display based on the current limit
+  const displayEntries = entries.slice(0, displayLimit);
 
   return (
     <div>
@@ -168,8 +193,8 @@ export const LeaderboardTable = ({ period, periodLabel }: LeaderboardTableProps)
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {entries.length > 0 ? (
-                  entries.map((entry) => (
+                {displayEntries.length > 0 ? (
+                  displayEntries.map((entry) => (
                     <tr key={entry.user_id} className={getRowClass(entry.user_id)}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center">
@@ -211,11 +236,22 @@ export const LeaderboardTable = ({ period, periodLabel }: LeaderboardTableProps)
                 )}
               </tbody>
             </table>
+            
+            {entries.length > 10 && (
+              <div className="p-4 text-center">
+                <Button 
+                  variant="outline" 
+                  onClick={handleShowMore}
+                >
+                  {showAllUsers ? "Show Less" : `Show All (${entries.length})`}
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {userRank && userRank.rank > 10 && (
+      {userRank && userRank.rank > displayLimit && !showAllUsers && (
         <Card>
           <CardHeader className="py-3">
             <CardTitle className="text-sm font-medium">Your Ranking</CardTitle>

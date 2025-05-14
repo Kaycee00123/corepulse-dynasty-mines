@@ -8,11 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LeaderboardTable } from '@/components/LeaderboardTable';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 const Leaderboard = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [totalUsers, setTotalUsers] = useState<number>(0);
-  const [showLeaderboard, setShowLeaderboard] = useState<boolean>(false);
+  const [showLeaderboard, setShowLeaderboard] = useState<boolean>(true); // Always show leaderboard
   
   // Fetch total users
   useEffect(() => {
@@ -25,11 +26,21 @@ const Leaderboard = () => {
         if (error) throw error;
         
         setTotalUsers(count || 0);
-        // Show leaderboard if we have enough users or for testing purposes
-        setShowLeaderboard(true); // For dev, always show. In prod: count >= 1000
+        // Always show leaderboard regardless of count
+        setShowLeaderboard(true);
+        
+        toast({
+          title: "Leaderboard loaded",
+          description: `Showing rankings for ${count} miners`,
+        });
       } catch (error) {
         console.error('Error fetching user count:', error);
         setTotalUsers(0);
+        toast({
+          title: "Error loading leaderboard",
+          description: "Unable to fetch user data",
+          variant: "destructive"
+        });
       }
     };
     

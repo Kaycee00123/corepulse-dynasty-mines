@@ -1,7 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from '@/hooks/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { RefreshCw } from 'lucide-react';
 
 export interface CommunityEvent {
   id: string;
@@ -14,6 +18,8 @@ export interface CommunityEvent {
 
 export const CommunityActivity = () => {
   const [activities, setActivities] = useState<CommunityEvent[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   
   useEffect(() => {
     // Initial fetch
@@ -59,18 +65,22 @@ export const CommunityActivity = () => {
       )
       .subscribe();
       
+    // Set an interval to refresh data periodically (every 2 minutes)
+    const refreshInterval = setInterval(() => {
+      fetchCommunityActivity();
+    }, 120000);
+      
     return () => {
       supabase.removeChannel(miningChannel);
       supabase.removeChannel(nftChannel);
       supabase.removeChannel(crewChannel);
+      clearInterval(refreshInterval);
     };
   }, []);
   
   const fetchCommunityActivity = async () => {
     try {
-      // For demonstration, we'll create some mock community events
-      // In a real app, you'd probably have a dedicated table for community events
-      // or join across tables to create a feed
+      setRefreshing(true);
       
       // Get recent mining sessions
       const { data: miningSessions, error: miningError } = await supabase
@@ -78,7 +88,7 @@ export const CommunityActivity = () => {
         .select('*, profiles:user_id(username, avatar_url)')
         .eq('active', false)
         .order('end_time', { ascending: false })
-        .limit(3);
+        .limit(10);
         
       if (miningError) throw miningError;
       
@@ -87,7 +97,7 @@ export const CommunityActivity = () => {
         .from('user_nfts')
         .select('*, profiles:user_id(username, avatar_url), nfts:nft_id(name, tier)')
         .order('purchased_at', { ascending: false })
-        .limit(3);
+        .limit(5);
         
       if (nftError) throw nftError;
       
@@ -96,7 +106,7 @@ export const CommunityActivity = () => {
         .from('crew_members')
         .select('*, profiles:user_id(username, avatar_url), crews:crew_id(name)')
         .order('joined_at', { ascending: false })
-        .limit(3);
+        .limit(5);
         
       if (crewError) throw crewError;
       
@@ -128,14 +138,27 @@ export const CommunityActivity = () => {
         timestamp: join.joined_at
       }));
       
-      // Combine all events, sort by timestamp (descending), and limit to 10
+      // Combine all events, sort by timestamp (descending), and limit to 15
       const allEvents = [...formattedMiningEvents, ...formattedNFTEvents, ...formattedCrewEvents]
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 10);
+        .slice(0, 15);
       
       setActivities(allEvents);
+      setLastUpdate(new Date());
+      
+      toast({
+        title: "Community Activity Updated",
+        description: `${allEvents.length} recent activities loaded`,
+      });
     } catch (error) {
       console.error('Error fetching community activity:', error);
+      toast({
+        title: "Error updating activity",
+        description: "Failed to fetch community activities",
+        variant: "destructive"
+      });
+    } finally {
+      setRefreshing(false);
     }
   };
   
@@ -160,8 +183,14 @@ export const CommunityActivity = () => {
         timestamp: payload.new.end_time || new Date().toISOString()
       };
       
-      // Add to state, keeping only the 10 most recent events
-      setActivities(prev => [newEvent, ...prev.slice(0, 9)]);
+      // Add to state, keeping only the 15 most recent events
+      setActivities(prev => [newEvent, ...prev.slice(0, 14)]);
+      setLastUpdate(new Date());
+      
+      toast({
+        title: "New Mining Activity",
+        description: `${userData.username} mined ${payload.new.tokens_mined.toFixed(2)} $WAVES`,
+      });
     } catch (error) {
       console.error('Error processing mining event:', error);
     }
@@ -196,8 +225,14 @@ export const CommunityActivity = () => {
         timestamp: payload.new.purchased_at
       };
       
-      // Add to state, keeping only the 10 most recent events
-      setActivities(prev => [newEvent, ...prev.slice(0, 9)]);
+      // Add to state, keeping only the 15 most recent events
+      setActivities(prev => [newEvent, ...prev.slice(0, 14)]);
+      setLastUpdate(new Date());
+      
+      toast({
+        title: "New NFT Minted",
+        description: `${userData.username} minted a ${nftData.tier} NFT`,
+      });
     } catch (error) {
       console.error('Error processing NFT event:', error);
     }
@@ -232,43 +267,97 @@ export const CommunityActivity = () => {
         timestamp: payload.new.joined_at
       };
       
-      // Add to state, keeping only the 10 most recent events
-      setActivities(prev => [newEvent, ...prev.slice(0, 9)]);
+      // Add to state, keeping only the 15 most recent events
+      setActivities(prev => [newEvent, ...prev.slice(0, 14)]);
+      setLastUpdate(new Date());
+      
+      toast({
+        title: "New Crew Member",
+        description: `${userData.username} joined ${crewData.name} crew`,
+      });
     } catch (error) {
       console.error('Error processing crew event:', error);
     }
   };
+  
+  const getActivityTypeStyle = (type: string) => {
+    switch(type) {
+      case 'mining':
+        return 'bg-green-100 text-green-800';
+      case 'nft':
+        return 'bg-purple-100 text-purple-800';
+      case 'crew':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
-    <div className="mt-4">
-      <h2 className="text-base font-bold mb-2">Community Activity</h2>
-      <div className="space-y-2">
-        {activities.length > 0 ? (
-          activities.map((activity) => (
-            <div key={activity.id} className="bg-white border border-gray-100 rounded-lg p-3 text-xs">
-              <div className="flex items-center gap-2">
-                <Avatar className="w-6 h-6">
-                  <AvatarImage src={activity.avatar_url} />
-                  <AvatarFallback className="bg-gray-200 text-[10px]">
-                    {activity.username.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-grow">
-                  <span className="font-medium">{activity.username}</span> {" "}
-                  {activity.details}
-                </div>
-                <div className="text-gray-400 text-[10px]">
-                  {new Date(activity.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+    <Card className="mt-4">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-base">Community Activity</CardTitle>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">
+            Last updated: {lastUpdate.toLocaleTimeString()}
+          </span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 w-8 p-0" 
+            disabled={refreshing}
+            onClick={fetchCommunityActivity}
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span className="sr-only">Refresh</span>
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {activities.length > 0 ? (
+            activities.map((activity) => (
+              <div key={activity.id} className="bg-white border border-gray-100 rounded-lg p-3 text-xs hover:border-gray-200 transition-all">
+                <div className="flex items-center gap-2">
+                  <Avatar className="w-6 h-6">
+                    <AvatarImage src={activity.avatar_url} />
+                    <AvatarFallback className="bg-gray-200 text-[10px]">
+                      {activity.username.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-grow">
+                    <span className="font-medium">{activity.username}</span> {" "}
+                    {activity.details}
+                    <Badge className={`ml-2 text-[8px] ${getActivityTypeStyle(activity.event_type)}`} variant="outline">
+                      {activity.event_type}
+                    </Badge>
+                  </div>
+                  <div className="text-gray-400 text-[10px]">
+                    {new Date(activity.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="text-center py-4 text-gray-500 text-sm">
+              No recent activity
             </div>
-          ))
-        ) : (
-          <div className="text-center py-4 text-gray-500 text-sm">
-            No recent activity
-          </div>
-        )}
-      </div>
-    </div>
+          )}
+          
+          {activities.length > 0 && (
+            <div className="text-center pt-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={fetchCommunityActivity}
+                disabled={refreshing}
+              >
+                {refreshing ? 'Refreshing...' : 'Refresh Activity'}
+              </Button>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
