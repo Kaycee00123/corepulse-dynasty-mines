@@ -27,7 +27,7 @@ export function AdminNFTsManager() {
   const [nftForm, setNftForm] = useState({
     name: '',
     description: '',
-    tier: 'bronze',
+    tier: 'bronze' as 'bronze' | 'silver' | 'gold',
     boost_percentage: 5,
     price: 100,
     image_url: ''
@@ -48,7 +48,13 @@ export function AdminNFTsManager() {
         
       if (error) throw error;
       
-      setNfts(data as NFT[]);
+      // Cast the tier field to ensure it matches our type
+      const typedNFTs: NFT[] = data?.map(nft => ({
+        ...nft,
+        tier: nft.tier as 'bronze' | 'silver' | 'gold'
+      })) || [];
+      
+      setNfts(typedNFTs);
     } catch (error) {
       console.error('Error fetching NFTs:', error);
     } finally {
@@ -88,8 +94,13 @@ export function AdminNFTsManager() {
         description: `${nftForm.name} has been created successfully`
       });
       
-      // Reset form and update list
-      setNfts([...nfts, data as NFT]);
+      // Cast the tier field to ensure it matches our type and update list
+      const newNFT: NFT = {
+        ...data,
+        tier: data.tier as 'bronze' | 'silver' | 'gold'
+      };
+      
+      setNfts([...nfts, newNFT]);
       resetForm();
       setIsCreateDialogOpen(false);
     } catch (error: any) {
@@ -138,9 +149,13 @@ export function AdminNFTsManager() {
         description: `${nftForm.name} has been updated successfully`
       });
       
-      // Update local state
+      // Update local state while ensuring tier is properly typed
       setNfts(nfts.map(n => 
-        n.id === selectedNFT.id ? { ...n, ...nftForm } : n
+        n.id === selectedNFT.id ? { 
+          ...n, 
+          ...nftForm,
+          tier: nftForm.tier 
+        } : n
       ));
       
       resetForm();
