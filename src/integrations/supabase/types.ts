@@ -163,6 +163,7 @@ export type Database = {
           mining_boost: number
           mining_rate: number
           referral_code: string
+          role: string | null
           streak_days: number
           username: string
         }
@@ -174,6 +175,7 @@ export type Database = {
           mining_boost?: number
           mining_rate?: number
           referral_code: string
+          role?: string | null
           streak_days?: number
           username: string
         }
@@ -185,6 +187,7 @@ export type Database = {
           mining_boost?: number
           mining_rate?: number
           referral_code?: string
+          role?: string | null
           streak_days?: number
           username?: string
         }

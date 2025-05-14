@@ -24,8 +24,10 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Wrap the entire application with necessary providers
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    {/* TooltipProvider needs React context, so it should wrap everything */}
     <TooltipProvider>
       <AuthProvider>
         <MiningProvider>
