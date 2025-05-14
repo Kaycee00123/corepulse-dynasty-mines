@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNFTs } from '@/contexts/NFTContext';
+import { useNFT } from '@/contexts/NFTContext'; // Fixed hook name
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -14,7 +14,7 @@ import { NFTDetailView } from '@/components/NFTDetailView';
 
 const NFTs = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { nfts, userNFTs, isLoading: nftsLoading, buyNFT } = useNFTs();
+  const { availableNFTs: nfts, userNFTs, isLoading: nftsLoading, mintNFT: buyNFT } = useNFT(); // Updated this line to use the correct properties
   
   const [selectedNFT, setSelectedNFT] = useState<NFT | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);

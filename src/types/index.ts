@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   email: string;
@@ -11,6 +10,7 @@ export interface User {
   streak_days: number;
   referral_code: string;
   tokens?: number; // Added for admin view
+  role?: string; // Adding role property to match what's used in Navigation component
 }
 
 export interface MiningSession {
