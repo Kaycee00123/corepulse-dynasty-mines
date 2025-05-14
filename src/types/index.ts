@@ -11,7 +11,8 @@ export interface User {
   last_active: string | null;
   streak_days: number;
   referral_code: string;
-  role?: string; // Add role property that was missing
+  role?: string;
+  tokens?: number;
 }
 
 export interface AppUser extends User {
