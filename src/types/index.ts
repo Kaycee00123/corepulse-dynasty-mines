@@ -1,16 +1,21 @@
+import { User as SupabaseUser } from '@supabase/supabase-js';
+
 export interface User {
   id: string;
   email: string;
   username: string;
   created_at: string;
-  avatar_url?: string;
+  avatar_url: string | null;
   mining_rate: number;
   mining_boost: number;
-  last_active?: string;
+  last_active: string | null;
   streak_days: number;
   referral_code: string;
-  tokens?: number; // Added for admin view
-  role?: string; // Adding role property to match what's used in Navigation component
+  role?: string; // Add role property that was missing
+}
+
+export interface AppUser extends User {
+  // Additional app-specific user properties can go here
 }
 
 export interface MiningSession {
